@@ -10,7 +10,7 @@ const md5 = require('md5')
 const server = http.createServer((req, res) => {
   const pathname = url.parse(req.url).pathname
   if (pathname === '/') {
-    staticPublic('login.html', 'utf8')
+    staticPublic('login.html', 'utf8', res)
       .then(content => {
         res.setHeader('Content-Type', 'text/html')
         res.writeHead(200, 'OK')
@@ -18,7 +18,7 @@ const server = http.createServer((req, res) => {
       })
   }
   if (pathname === '/favicon.ico') {
-    staticPublic('favicon.ico')
+    staticPublic('favicon.ico', undefined, res)
       .then(content => {
         res.writeHead(200, 'OK')
         res.end(content)
@@ -28,7 +28,7 @@ const server = http.createServer((req, res) => {
     const cookieObj = parseCookie(req.headers.cookie)
     let token = cookieObj[KEY]
     if (sessions[token] && sessions[token].admin === 'yes' && sessions[token].expire >= new Date().getTime()) {
-      staticPublic('home.html', 'utf-8')
+      staticPublic('home.html', 'utf-8', res)
         .then(content => {
           // 更新超时时间
           sessions[token].expire = new Date().getTime() + EXPIRES
@@ -59,9 +59,9 @@ const server = http.createServer((req, res) => {
 })
 
 
-function staticPublic(url, parseCode){
+function staticPublic(url, parseCode, res){
   const staticPath = path.resolve(process.cwd(), './public')
-  const _path = path.resolve(staticPath, `.${url}`)
+  const _path = path.resolve(staticPath, `${url}`)
   return new Promise((resolve, reject) => {
     fs.readFile(_path, parseCode, (error, content) => {
       if (error) {
@@ -71,7 +71,7 @@ function staticPublic(url, parseCode){
       }
     })
   }).catch(error => {
-    handleError(error)
+    handleError(error, res)
   })
 }
 
@@ -92,7 +92,7 @@ function handleLogin(req, res) {
       redirect(res, '/')
     }
   } else {
-    handleError(new Error('Not Found'))
+    handleError(new Error('Not Found'), res)
   }
 }
 
